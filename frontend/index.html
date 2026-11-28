@@ -1,0 +1,559 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Voice to FHIR (synthetic demo)</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="favicon-32.png" type="image/png" sizes="32x32">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <meta name="theme-color" content="#0f2747">
+  <link rel="stylesheet" href="vendor/bootstrap-5.3.9/bootstrap.min.css">
+  <link rel="stylesheet" href="css/custom.css">
+</head>
+<body>
+  <nav class="navbar navbar-expand app-navbar" data-bs-theme="dark" aria-label="Main">
+    <div class="container">
+      <span class="navbar-brand mb-0 h1 d-flex align-items-center gap-2"><svg class="brand-mark" width="28" height="28" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><rect width="32" height="32" rx="8"/><path d="M6 16h4l2.5-7 4.5 14 3.5-10 2 3h3.5" fill="none" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span>Voice to FHIR</span><span class="badge brand-tag d-none d-sm-inline">Synthetic demo</span></span>
+      <ul class="navbar-nav" id="nav-links" hidden>
+        <li class="nav-item"><a class="nav-link" href="#/start" id="nav-start">Patients</a></li>
+        <li class="nav-item"><a class="nav-link" href="#/drafts" id="nav-drafts">Drafts</a></li>
+      </ul>
+      <div class="d-flex align-items-center gap-2 ms-auto" id="nav-user" hidden>
+        <span class="avatar avatar-sm nav-avatar" id="nav-avatar" aria-hidden="true"></span>
+        <span class="navbar-text small text-truncate nav-username d-none d-md-inline"><span class="visually-hidden">Signed in as </span><span id="nav-username"></span></span>
+        <button type="button" class="btn btn-outline-light btn-sm" id="btn-signout">Sign out</button>
+      </div>
+    </div>
+  </nav>
+
+  <main class="container py-4">
+    <div class="alert alert-warning synthetic-banner d-flex align-items-center gap-2 py-2 px-3 small" role="note">
+      <svg class="icon flex-shrink-0" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 1.5 1 14h14L8 1.5Zm0 4.2c.4 0 .7.3.7.7v3.4a.7.7 0 0 1-1.4 0V6.4c0-.4.3-.7.7-.7Zm0 6.9a.85.85 0 1 1 0-1.7.85.85 0 0 1 0 1.7Z"/></svg>
+      <span><strong>Synthetic data only.</strong> AI-generated draft for clinician review. Not medical advice.</span>
+    </div>
+    <div id="alerts" aria-live="polite"></div>
+
+    <!-- a) Login -->
+    <section id="view-login" hidden aria-labelledby="login-title">
+      <div class="login-wrap">
+        <div class="text-center mb-4">
+          <svg class="brand-mark brand-mark-lg mb-3" width="52" height="52" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><rect width="32" height="32" rx="8"/><path d="M6 16h4l2.5-7 4.5 14 3.5-10 2 3h3.5" fill="none" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <h1 class="h4 mb-1" id="login-title" tabindex="-1">Clinician sign in</h1>
+          <p class="text-body-secondary small mb-0">Voice to FHIR: a synthetic clinical scribe demo on AWS</p>
+        </div>
+      <div class="card login-card">
+        <div class="card-body p-4">
+          <div class="alert alert-danger" id="login-error" role="alert" hidden></div>
+          <form id="login-form" novalidate>
+            <div class="mb-3">
+              <label for="login-email" class="form-label">Email</label>
+              <input type="email" class="form-control" id="login-email" name="email"
+                     autocomplete="username" required aria-describedby="login-email-feedback">
+              <div class="invalid-feedback" id="login-email-feedback">Enter a valid email address.</div>
+            </div>
+            <div class="mb-3">
+              <label for="login-password" class="form-label">Password</label>
+              <input type="password" class="form-control" id="login-password" name="password"
+                     autocomplete="current-password" required minlength="8"
+                     aria-describedby="login-password-feedback">
+              <div class="invalid-feedback" id="login-password-feedback">Enter your password (at least 8 characters).</div>
+            </div>
+            <button type="submit" class="btn btn-primary w-100" id="login-submit">
+              <span class="spinner-border spinner-border-sm me-1" aria-hidden="true" hidden></span>
+              <span>Sign in</span>
+            </button>
+          </form>
+        </div>
+      </div>
+        <p class="text-center small text-body-secondary mt-3 mb-0">Demo account only. Never enter real patient information.</p>
+      </div>
+    </section>
+
+    <!-- b) Start: patient list + EHR-style chart -->
+    <section id="view-start" hidden aria-labelledby="start-title">
+      <div class="page-header">
+        <h1 class="h4 mb-1" id="start-title" tabindex="-1">Patients</h1>
+        <p class="text-body-secondary mb-0">Choose a synthetic patient to see their chart and start a consultation.</p>
+      </div>
+      <div class="row g-4">
+        <div class="col-lg-4 col-xxl-3">
+          <div class="card sticky-panel">
+            <fieldset>
+              <legend class="card-header fs-6 fw-semibold mb-0">Synthetic patients</legend>
+              <div class="list-group list-group-flush" id="patient-list"></div>
+            </fieldset>
+          </div>
+        </div>
+        <div class="col-lg-8 col-xxl-9">
+          <div class="empty-state" id="chart-empty">
+            <svg class="icon icon-xl mb-3" width="44" height="44" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 12a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9Zm0 2c-4.4 0-8 2.2-8 5v2h16v-2c0-2.8-3.6-5-8-5Z"/></svg>
+            <p class="fw-semibold text-body mb-1">No patient selected</p>
+            <p class="small mb-0">Select a patient to see their chart and start a consultation.</p>
+          </div>
+          <div id="chart" hidden>
+            <div class="card mb-3">
+              <div class="card-body d-flex flex-wrap gap-3 align-items-center" id="chart-banner"></div>
+            </div>
+            <div class="card mb-3">
+              <div class="card-header">
+                <h2 class="h6 fw-semibold mb-0">Start a consultation</h2>
+                <p class="small text-body-secondary mb-0">Process a recording into a draft you review before anything reaches HealthLake.</p>
+              </div>
+              <div class="card-body">
+                <form id="process-form" novalidate>
+                  <label for="sample-select" class="form-label fw-semibold">Sample recording</label>
+                  <select class="form-select" id="sample-select" required aria-describedby="sample-help sample-feedback"></select>
+                  <div class="invalid-feedback" id="sample-feedback">Choose a sample recording, or upload one below.</div>
+                  <div class="form-text" id="sample-help">Synthetic two-speaker consultations generated with Amazon Polly.</div>
+                  <audio controls preload="none" class="w-100 mt-2" id="start-audio" aria-label="Preview the chosen recording" hidden></audio>
+                  <details class="mt-3" id="upload-details">
+                    <summary class="small">Or upload your own synthetic recording</summary>
+                    <div class="mt-2">
+                      <label for="upload-file" class="form-label small">Audio file: WAV, MP3, FLAC or M4A; up to 4 MB; 16 kHz or higher</label>
+                      <input class="form-control form-control-sm" type="file" id="upload-file"
+                             accept=".wav,.mp3,.flac,.m4a" aria-describedby="upload-feedback">
+                      <div class="invalid-feedback" id="upload-feedback"></div>
+                      <div class="form-check mt-2">
+                        <input class="form-check-input" type="checkbox" id="upload-synthetic" aria-describedby="upload-synthetic-feedback">
+                        <label class="form-check-label small" for="upload-synthetic">This recording is synthetic (for example a
+                          script read aloud) and contains no real patient information.</label>
+                        <div class="invalid-feedback" id="upload-synthetic-feedback">Confirm the recording is synthetic.</div>
+                      </div>
+                    </div>
+                  </details>
+                  <div class="alert alert-danger py-2 mt-3 small" id="patient-required" role="alert" hidden>Choose a patient first.</div>
+                  <fieldset class="mt-4">
+                    <legend class="form-label fw-semibold fs-6 mb-2">AI engine</legend>
+                    <div class="row row-cols-1 row-cols-md-3 g-2">
+                      <div class="col">
+                        <label class="engine-option" for="engine-transcribe">
+                          <input class="form-check-input" type="radio" name="engine" id="engine-transcribe" value="transcribe" checked>
+                          <span><span class="d-block fw-semibold">Transcribe Medical</span>
+                            <span class="d-block small text-body-secondary">Amazon Transcribe Medical + Comprehend Medical</span></span>
+                        </label>
+                      </div>
+                      <div class="col">
+                        <label class="engine-option" for="engine-healthscribe">
+                          <input class="form-check-input" type="radio" name="engine" id="engine-healthscribe" value="healthscribe">
+                          <span><span class="d-block fw-semibold">AWS HealthScribe</span>
+                            <span class="d-block small text-body-secondary">+ Comprehend Medical: speaker roles, dialogue sections, clinical note</span></span>
+                        </label>
+                      </div>
+                      <div class="col">
+                        <label class="engine-option" for="engine-both">
+                          <input class="form-check-input" type="radio" name="engine" id="engine-both" value="both">
+                          <span><span class="d-block fw-semibold">Both, side by side</span>
+                            <span class="d-block small text-body-secondary">Compare the two engines on one recording</span></span>
+                        </label>
+                      </div>
+                    </div>
+                  </fieldset>
+                  <div class="row g-2 mt-1" id="scribe-options" hidden>
+                    <div class="col-sm-7">
+                      <label for="note-template" class="form-label small">HealthScribe note template</label>
+                      <select class="form-select form-select-sm" id="note-template"><option value="HISTORY_AND_PHYSICAL">History and physical (default)</option><option value="PHYSICAL_SOAP">SOAP: physical health</option><option value="DAP">DAP</option><option value="GIRPP">GIRPP</option><option value="BIRP">BIRP</option><option value="SIRP">SIRP</option><option value="BEHAVIORAL_SOAP">SOAP: behavioral health</option></select>
+                    </div>
+                    <div class="col-sm-5">
+                      <label for="pronouns" class="form-label small">Patient's pronouns (optional)</label>
+                      <select class="form-select form-select-sm" id="pronouns" aria-describedby="pronouns-help">
+                        <option value="">Not specified</option><option value="SHE_HER">She/her</option>
+                        <option value="HE_HIM">He/him</option><option value="THEY_THEM">They/them</option>
+                      </select>
+                    </div>
+                    <div class="col-12 form-text" id="pronouns-help">HealthScribe uses the pronouns when writing the note. They
+                      are never inferred from the patient's sex or name.</div>
+                  </div>
+                  <button type="submit" class="btn btn-primary btn-lg-wide mt-4" id="process-submit">
+                    <span class="spinner-border spinner-border-sm me-1" aria-hidden="true" hidden></span>
+                    <span>Process consultation</span>
+                  </button>
+                </form>
+              </div>
+            </div>
+            <div class="row row-cols-1 row-cols-xl-2 g-3" id="chart-sections"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Drafts -->
+    <section id="view-drafts" hidden aria-labelledby="drafts-title">
+      <div class="page-header d-flex flex-wrap align-items-end gap-2">
+        <div class="me-auto">
+          <h1 class="h4 mb-1" id="drafts-title" tabindex="-1">Drafts</h1>
+          <p class="text-body-secondary mb-0">AI-generated drafts waiting for review, and what happened to earlier ones.</p>
+        </div>
+        <button type="button" class="btn btn-outline-secondary btn-sm" id="btn-drafts-refresh">
+          <span class="spinner-border spinner-border-sm me-1" aria-hidden="true" hidden></span>
+          <span>Refresh</span>
+        </button>
+        <a class="btn btn-primary btn-sm" href="#/start">New consultation</a>
+      </div>
+      <div class="card">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <caption class="small px-3">Most recent 50 drafts, newest first. Times in IST (UTC+05:30).</caption>
+          <thead><tr><th scope="col">Created</th><th scope="col">Patient</th><th scope="col">Status</th>
+            <th scope="col">Resources</th><th scope="col"><span class="visually-hidden">Action</span></th></tr></thead>
+          <tbody id="drafts-body"></tbody>
+        </table>
+      </div>
+      </div>
+    </section>
+
+    <!-- c) Status -->
+    <section id="view-status" hidden aria-labelledby="status-title">
+      <div class="page-header">
+        <h1 class="h4 mb-1" id="status-title" tabindex="-1">Processing consultation</h1>
+        <p class="small text-body-secondary mb-0">Draft <code id="status-draft-id"></code> &middot; checks every 5 seconds</p>
+      </div>
+      <div class="card status-card mb-3">
+      <div class="card-body p-4">
+      <p class="small" id="status-engines"></p>
+      <div class="progress mb-3" role="progressbar" aria-label="Pipeline progress" aria-valuemin="0"
+           aria-valuemax="100" aria-valuenow="0" id="status-progress">
+        <div class="progress-bar" id="status-bar"></div>
+      </div>
+      <ol class="list-group list-group-numbered mb-3" id="status-steps"></ol>
+      <div class="visually-hidden" id="status-live" aria-live="polite"></div>
+      <div class="alert alert-danger" id="status-failed" role="alert" hidden></div>
+      <a class="btn btn-outline-secondary" href="#/drafts">Back to drafts</a>
+      <p class="small text-body-secondary mt-2 mb-0">Processing continues if you leave this page; open the draft again from Drafts.</p>
+      </div>
+      </div>
+    </section>
+
+    <!-- d) Review -->
+    <section id="view-review" hidden aria-labelledby="review-title">
+      <a class="back-link small" href="#/drafts">&larr; Back to drafts</a>
+      <div class="page-header mt-2">
+        <h1 class="h4 mb-2" id="review-title" tabindex="-1">Review AI-generated draft</h1>
+        <div class="d-flex flex-wrap align-items-center gap-2" id="review-meta"></div>
+      </div>
+      <div class="card mb-3" id="review-audio-wrap" hidden>
+        <div class="card-body py-2 d-flex flex-wrap align-items-center gap-3">
+          <p class="small fw-semibold mb-0 text-nowrap" id="review-audio-label">Consultation audio</p>
+          <audio controls preload="none" class="flex-grow-1 review-audio" id="review-audio" aria-labelledby="review-audio-label"></audio>
+        </div>
+      </div>
+      <div class="card review-card mb-3">
+      <div class="card-header pb-0">
+      <ul class="nav nav-tabs card-header-tabs" role="tablist">
+        <li class="nav-item" role="presentation">
+          <button class="nav-link active" id="tab-transcript" data-bs-toggle="tab" data-bs-target="#pane-transcript"
+                  type="button" role="tab" aria-controls="pane-transcript" aria-selected="true">Transcript</button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="tab-entities" data-bs-toggle="tab" data-bs-target="#pane-entities"
+                  type="button" role="tab" aria-controls="pane-entities" aria-selected="false">NLP entities</button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="tab-resources" data-bs-toggle="tab" data-bs-target="#pane-resources"
+                  type="button" role="tab" aria-controls="pane-resources" aria-selected="false">FHIR resources</button>
+        </li>
+        <li class="nav-item" role="presentation" id="tab-note-item">
+          <button class="nav-link" id="tab-note" data-bs-toggle="tab" data-bs-target="#pane-note"
+                  type="button" role="tab" aria-controls="pane-note" aria-selected="false">Clinical note</button>
+        </li>
+        <li class="nav-item" role="presentation" id="tab-compare-item" hidden>
+          <button class="nav-link" id="tab-compare" data-bs-toggle="tab" data-bs-target="#pane-compare"
+                  type="button" role="tab" aria-controls="pane-compare" aria-selected="false">Compare engines</button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="tab-json" data-bs-toggle="tab" data-bs-target="#pane-json"
+                  type="button" role="tab" aria-controls="pane-json" aria-selected="false">JSON</button>
+        </li>
+      </ul>
+      </div>
+      <div class="tab-content card-body">
+        <div class="tab-pane show active" id="pane-transcript" role="tabpanel" aria-labelledby="tab-transcript" tabindex="0">
+          <p class="small text-body-secondary"><span id="transcript-source"></span> Machine transcription can contain
+            errors: check it against the audio. To correct the text written to HealthLake, edit the transcript
+            (DocumentReference) on the FHIR resources tab.</p>
+          <ol class="list-unstyled mb-0" id="transcript-list"></ol>
+        </div>
+        <div class="tab-pane" id="pane-entities" role="tabpanel" aria-labelledby="tab-entities" tabindex="0">
+          <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+              <caption class="small">Amazon Comprehend Medical output (DetectEntitiesV2, InferICD10CM, InferRxNorm).
+                Entity score: confidence that the text is this kind of entity. Each trait has its own score; traits such
+                as LOW_CONFIDENCE or HYPOTHETICAL describe how the item was said, not how sure the detection is.</caption>
+              <thead><tr><th scope="col">Text</th><th scope="col">Category</th><th scope="col">Traits (score)</th>
+                <th scope="col">Entity score</th><th scope="col">Code (code score)</th></tr></thead>
+              <tbody id="entities-body"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="tab-pane" id="pane-resources" role="tabpanel" aria-labelledby="tab-resources" tabindex="0">
+          <p class="small text-body-secondary">Flagged items are not pre-selected. An Encounter and a Provenance
+            record (AI author, you as verifier) are added automatically when you approve.</p>
+          <div class="d-flex flex-wrap gap-2 mb-2" id="resource-actions">
+            <button type="button" class="btn btn-outline-secondary btn-sm" id="btn-add-condition">Add condition</button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" id="btn-add-medication">Add medication</button>
+          </div>
+          <div class="list-group mb-3" id="resource-list"></div>
+          <h2 class="h6">Excluded (never written)</h2>
+          <ul class="list-group list-group-flush small" id="excluded-list"></ul>
+        </div>
+        <div class="tab-pane" id="pane-note" role="tabpanel" aria-labelledby="tab-note" tabindex="0">
+          <p class="small text-body-secondary">Drafted by <strong>AWS HealthScribe</strong> (generative AI). Select a
+            sentence to see the dialogue it was summarised from. Nothing is written to HealthLake unless you tick the
+            clinical-note DocumentReference on the FHIR resources tab and approve.</p>
+          <div class="d-flex flex-wrap gap-2 align-items-end mb-2">
+            <div>
+              <label for="note-select" class="form-label small mb-1">Note</label>
+              <select class="form-select form-select-sm" id="note-select"></select>
+            </div>
+            <button type="button" class="btn btn-outline-primary btn-sm" id="btn-use-note">
+              <span class="spinner-border spinner-border-sm me-1" aria-hidden="true" hidden></span>
+              <span>Use this note for HealthLake</span>
+            </button>
+            <div class="ms-lg-auto">
+              <label for="note-new-template" class="form-label small mb-1">Generate with another template</label>
+              <select class="form-select form-select-sm" id="note-new-template"><option value="HISTORY_AND_PHYSICAL">History and physical (default)</option><option value="PHYSICAL_SOAP">SOAP: physical health</option><option value="DAP">DAP</option><option value="GIRPP">GIRPP</option><option value="BIRP">BIRP</option><option value="SIRP">SIRP</option><option value="BEHAVIORAL_SOAP">SOAP: behavioral health</option></select>
+            </div>
+            <button type="button" class="btn btn-outline-secondary btn-sm" id="btn-generate-note">
+              <span class="spinner-border spinner-border-sm me-1" aria-hidden="true" hidden></span>
+              <span>Generate</span>
+            </button>
+          </div>
+          <p class="small mb-2" id="note-status" aria-live="polite"></p>
+          <div class="row g-3">
+            <div class="col-lg-7" id="note-sections"></div>
+            <div class="col-lg-5">
+              <div class="card">
+                <div class="card-header small fw-semibold">Evidence from the conversation</div>
+                <div class="card-body small" id="note-evidence" aria-live="polite">Select a sentence in the note.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="tab-pane" id="pane-compare" role="tabpanel" aria-labelledby="tab-compare" tabindex="0">
+          <p class="small text-body-secondary">The same recording processed by both engines. FHIR resources are proposed
+            from the AWS HealthScribe result.</p>
+          <div class="row row-cols-1 row-cols-lg-2 g-3" id="compare-columns"></div>
+        </div>
+        <div class="tab-pane" id="pane-json" role="tabpanel" aria-labelledby="tab-json" tabindex="0">
+          <label for="json-select" class="form-label">Proposed resource</label>
+          <select class="form-select mb-2" id="json-select"></select>
+          <pre class="bg-body-tertiary border rounded p-2 small json-view" id="json-view" tabindex="0"></pre>
+        </div>
+      </div>
+      </div>
+      <div class="card review-actions">
+      <div class="card-body d-flex flex-wrap align-items-center gap-3">
+      <div id="review-encounter-wrap" class="review-when">
+        <label for="review-encounter-start" class="form-label small fw-semibold mb-1">Consultation date and time</label>
+        <input type="datetime-local" class="form-control form-control-sm" id="review-encounter-start" required
+               aria-describedby="review-encounter-help">
+        <div class="form-text mt-1" id="review-encounter-help">Encounter start in HealthLake (IST, UTC+05:30).
+          Defaults to when the recording was processed.</div>
+      </div>
+      <div class="d-flex flex-wrap align-items-center gap-2 ms-lg-auto">
+        <button type="button" class="btn btn-primary" id="btn-approve">
+          <span class="spinner-border spinner-border-sm me-1" aria-hidden="true" hidden></span>
+          <span>Approve selected and write to HealthLake</span>
+        </button>
+        <button type="button" class="btn btn-outline-danger" id="btn-reject">
+          <span class="spinner-border spinner-border-sm me-1" aria-hidden="true" hidden></span>
+          <span>Reject draft</span>
+        </button>
+        <span class="small text-body-secondary" id="selection-count" aria-live="polite"></span>
+      </div>
+      </div>
+      </div>
+    </section>
+
+    <!-- e) Done -->
+    <section id="view-done" hidden aria-labelledby="done-title">
+      <div class="card done-card mx-auto" role="status">
+        <div class="card-body p-4">
+          <div class="d-flex align-items-center gap-3 mb-3">
+            <span class="done-icon" aria-hidden="true"><svg class="icon" width="24" height="24" viewBox="0 0 16 16" focusable="false"><path d="M6.4 11.6 2.8 8l1.1-1.1 2.5 2.5 5.7-5.7L13.2 4.8z"/></svg></span>
+            <div>
+              <h1 class="h5 mb-0" id="done-title" tabindex="-1">Written to HealthLake</h1>
+              <p class="small text-body-secondary mb-0">These resources were written to the HealthLake datastore:</p>
+            </div>
+          </div>
+          <ul class="list-group mb-4" id="done-list"></ul>
+          <a class="btn btn-primary" href="#/start">Process another</a>
+          <a class="btn btn-outline-secondary" href="#/drafts">View drafts</a>
+        </div>
+      </div>
+    </section>
+  </main>
+  <footer class="app-footer">
+    <div class="container py-3 small text-body-secondary d-flex flex-wrap gap-2 justify-content-between">
+      <span>Voice to FHIR: synthetic data only, not for clinical use.</span>
+      <span>Amazon Transcribe Medical · AWS HealthScribe · Amazon Comprehend Medical · AWS HealthLake</span>
+    </div>
+  </footer>
+
+  <div class="modal" id="confirm-modal" tabindex="-1" aria-labelledby="confirm-title" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 class="modal-title h5" id="confirm-title"></h2>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cancel"></button>
+        </div>
+        <div class="modal-body">
+          <p class="mb-0" id="confirm-body"></p>
+          <div class="mt-3" id="confirm-feedback-wrap" hidden>
+            <label for="confirm-feedback" class="form-label" id="confirm-feedback-label"></label>
+            <textarea class="form-control" id="confirm-feedback" rows="3" maxlength="2000"
+                      aria-describedby="confirm-feedback-help confirm-feedback-error"></textarea>
+            <div class="invalid-feedback" id="confirm-feedback-error">Enter at least 5 characters.</div>
+            <div class="form-text" id="confirm-feedback-help">Kept with the draft for quality review. Not written to
+              HealthLake. Do not include real patient information.</div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn" id="confirm-ok"></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="edit-modal" tabindex="-1" aria-labelledby="edit-title" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <form class="modal-content" id="edit-form" novalidate>
+        <div class="modal-header">
+          <h2 class="modal-title h5" id="edit-title"></h2>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cancel"></button>
+        </div>
+        <div class="modal-body">
+          <div class="alert alert-danger" id="edit-error" role="alert" hidden></div>
+          <div class="row g-3">
+            <div class="col-sm-4" data-field="code">
+              <label for="edit-code" class="form-label" id="edit-code-label">Code</label>
+              <input class="form-control" id="edit-code" maxlength="12" aria-describedby="edit-code-help edit-code-error">
+              <div class="form-text" id="edit-code-help"></div>
+              <div class="invalid-feedback" id="edit-code-error">Enter a code in the format shown.</div>
+            </div>
+            <div class="col-sm-8" data-field="display">
+              <label for="edit-display" class="form-label">Description</label>
+              <input class="form-control" id="edit-display" maxlength="200" aria-describedby="edit-display-error">
+              <div class="invalid-feedback" id="edit-display-error">Enter a description.</div>
+            </div>
+            <div class="col-sm-6" data-field="clinicalStatus">
+              <label for="edit-clinical" class="form-label">Clinical status</label>
+              <select class="form-select" id="edit-clinical">
+                <option value="active">Active</option><option value="recurrence">Recurrence</option>
+                <option value="relapse">Relapse</option><option value="inactive">Inactive</option>
+                <option value="remission">Remission</option><option value="resolved">Resolved</option>
+              </select>
+            </div>
+            <div class="col-sm-6" data-field="verificationStatus">
+              <label for="edit-verification" class="form-label">Verification status</label>
+              <select class="form-select" id="edit-verification">
+                <option value="confirmed">Confirmed</option><option value="provisional">Provisional</option>
+                <option value="differential">Differential</option><option value="unconfirmed">Unconfirmed</option>
+                <option value="refuted">Refuted</option>
+              </select>
+            </div>
+            <div class="col-sm-6" data-field="status">
+              <label for="edit-status" class="form-label">Status</label>
+              <select class="form-select" id="edit-status">
+                <option value="active">Active</option><option value="completed">Completed</option>
+                <option value="intended">Intended</option><option value="stopped">Stopped</option>
+                <option value="on-hold">On hold</option><option value="not-taken">Not taken</option>
+              </select>
+            </div>
+            <div class="col-sm-6" data-field="dosage">
+              <label for="edit-dosage" class="form-label">Dosage (optional)</label>
+              <input class="form-control" id="edit-dosage" maxlength="200">
+            </div>
+            <div class="col-12" data-field="transcript">
+              <label for="edit-transcript" class="form-label">Transcript text written to HealthLake</label>
+              <textarea class="form-control font-monospace small" id="edit-transcript" rows="12" maxlength="10000"
+                        aria-describedby="edit-transcript-error"></textarea>
+              <div class="invalid-feedback" id="edit-transcript-error">The transcript cannot be empty.</div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="edit-save">
+            <span class="spinner-border spinner-border-sm me-1" aria-hidden="true" hidden></span>
+            <span>Save</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal" id="fhir-modal" tabindex="-1" aria-labelledby="fhir-title" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 class="modal-title h5" id="fhir-title">FHIR record in AWS HealthLake</h2>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p class="small text-body-secondary">The API sends each request to HealthLake's FHIR R4 REST endpoint, signed
+            with AWS SigV4. Below is HealthLake's response, unmodified. Read-only.</p>
+          <form class="row g-2 align-items-end mb-3" id="fhir-form">
+            <div class="col-sm-6 col-lg-4">
+              <label for="fhir-type" class="form-label">Resource type</label>
+              <select class="form-select" id="fhir-type"><option value="Patient">Patient</option><option value="Condition">Condition</option><option value="MedicationRequest">MedicationRequest</option><option value="MedicationStatement">MedicationStatement</option><option value="Observation">Observation</option><option value="Encounter">Encounter</option><option value="DocumentReference">DocumentReference</option></select>
+            </div>
+            <div class="col-auto">
+              <button type="submit" class="btn btn-primary" id="fhir-run">
+                <span class="spinner-border spinner-border-sm me-1" aria-hidden="true" hidden></span>
+                <span>Send request</span>
+              </button>
+            </div>
+          </form>
+          <dl class="row small mb-2" id="fhir-meta" hidden>
+            <dt class="col-sm-2">Request</dt><dd class="col-sm-10"><code class="text-break" id="fhir-url"></code></dd>
+            <dt class="col-sm-2">Status</dt><dd class="col-sm-10" id="fhir-status"></dd>
+            <dt class="col-sm-2">Duration</dt><dd class="col-sm-10" id="fhir-time"></dd>
+            <dt class="col-sm-2">Request id</dt><dd class="col-sm-10"><code id="fhir-reqid"></code></dd>
+            <dt class="col-sm-2">Summary</dt><dd class="col-sm-10" id="fhir-summary"></dd>
+          </dl>
+          <pre class="bg-body-tertiary border rounded p-2 small json-view" id="fhir-json" tabindex="0" hidden></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="encounter-modal" tabindex="-1" aria-labelledby="encounter-title" aria-hidden="true">
+    <div class="modal-dialog">
+      <form class="modal-content" id="encounter-form" novalidate>
+        <div class="modal-header">
+          <h2 class="modal-title h5" id="encounter-title">Edit encounter date and time</h2>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cancel"></button>
+        </div>
+        <div class="modal-body">
+          <div class="alert alert-danger" id="encounter-error" role="alert" hidden></div>
+          <p class="small text-body-secondary" id="encounter-type"></p>
+          <div class="mb-3">
+            <label for="encounter-start" class="form-label">Start</label>
+            <input type="datetime-local" class="form-control" id="encounter-start" required aria-describedby="encounter-help">
+            <div class="invalid-feedback">Enter the start date and time.</div>
+          </div>
+          <div class="mb-2">
+            <label for="encounter-end" class="form-label">End (optional)</label>
+            <input type="datetime-local" class="form-control" id="encounter-end" aria-describedby="encounter-help">
+          </div>
+          <div class="form-text" id="encounter-help">IST (UTC+05:30). Saving updates the Encounter in HealthLake (a new
+            version) and writes a Provenance record naming you.</div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="encounter-save">
+            <span class="spinner-border spinner-border-sm me-1" aria-hidden="true" hidden></span>
+            <span>Save</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="vendor/bootstrap-5.3.9/bootstrap.bundle.min.js"></script>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

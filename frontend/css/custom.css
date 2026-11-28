@@ -1,0 +1,365 @@
+/* Visual layer on top of Bootstrap 5.3.9. No external fonts or images (the CSP allows only 'self'). */
+
+/* Utilities such as d-flex use !important; the hidden attribute must still win. */
+[hidden] {
+  display: none !important;
+}
+
+:root {
+  --app-bg: #f3f6fa;
+  --app-navy: #0f2747;
+  --app-navy-2: #1a4274;
+  --app-accent: #5eead4;
+  --app-line: #e3e8ef;
+  --app-shadow-sm: 0 1px 2px rgba(15, 39, 71, 0.05), 0 1px 3px rgba(15, 39, 71, 0.07);
+  --app-shadow: 0 6px 18px rgba(15, 39, 71, 0.1);
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: var(--app-bg);
+}
+
+main {
+  flex: 1 0 auto;
+}
+
+/* Headings get focus on navigation (tabindex="-1") for screen readers; they are not controls. */
+h1[tabindex="-1"]:focus {
+  outline: none;
+}
+
+.icon {
+  width: 1rem;
+  height: 1rem;
+  fill: currentColor;
+}
+
+.icon-xl {
+  width: 2.75rem;
+  height: 2.75rem;
+}
+
+/* --- header and footer ------------------------------------------------------------------- */
+.app-navbar {
+  --bs-navbar-nav-link-padding-x: 0.75rem;
+  background: linear-gradient(90deg, var(--app-navy), var(--app-navy-2));
+  box-shadow: var(--app-shadow-sm);
+}
+
+.app-navbar .navbar-brand {
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.app-navbar .nav-link {
+  border-radius: 0.375rem;
+}
+
+.app-navbar .nav-link.active {
+  background-color: rgba(255, 255, 255, 0.14);
+}
+
+.brand-mark {
+  width: 1.75rem;
+  height: 1.75rem;
+  flex-shrink: 0;
+}
+
+.brand-mark rect {
+  fill: var(--app-accent);
+}
+
+.brand-mark path {
+  stroke: var(--app-navy);
+}
+
+.brand-mark-lg {
+  width: 3.25rem;
+  height: 3.25rem;
+}
+
+.brand-mark-lg rect {
+  fill: var(--app-navy);
+}
+
+.brand-mark-lg path {
+  stroke: var(--app-accent);
+}
+
+.brand-tag {
+  background-color: rgba(255, 255, 255, 0.14);
+  color: #dbeafe;
+  font-weight: 500;
+}
+
+.nav-username {
+  max-width: 40vw;
+}
+
+.app-footer {
+  border-top: 1px solid var(--app-line);
+  background-color: #fff;
+}
+
+/* --- shared building blocks -------------------------------------------------------------- */
+.synthetic-banner {
+  border: 0;
+  border-left: 4px solid var(--bs-warning);
+  box-shadow: var(--app-shadow-sm);
+}
+
+.page-header {
+  margin-bottom: 1.25rem;
+}
+
+.page-header h1 {
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.back-link {
+  color: var(--bs-secondary-color);
+  text-decoration: none;
+}
+
+.back-link:hover {
+  color: var(--bs-body-color);
+  text-decoration: underline;
+}
+
+.card {
+  --bs-card-border-color: var(--app-line);
+  --bs-card-cap-bg: #fff;
+  box-shadow: var(--app-shadow-sm);
+}
+
+.list-group {
+  --bs-list-group-border-color: var(--app-line);
+}
+
+.table {
+  --bs-table-border-color: var(--app-line);
+}
+
+.table > thead th {
+  background-color: #f8fafc;
+  color: var(--bs-secondary-color);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  background-color: var(--bs-primary-bg-subtle);
+  color: var(--bs-primary-text-emphasis);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.avatar-sm {
+  width: 1.9rem;
+  height: 1.9rem;
+  font-size: 0.72rem;
+}
+
+.avatar-lg {
+  width: 3.25rem;
+  height: 3.25rem;
+  font-size: 1.05rem;
+}
+
+.avatar-1 { background-color: var(--bs-success-bg-subtle); color: var(--bs-success-text-emphasis); }
+.avatar-2 { background-color: var(--bs-warning-bg-subtle); color: var(--bs-warning-text-emphasis); }
+.avatar-3 { background-color: var(--bs-info-bg-subtle); color: var(--bs-info-text-emphasis); }
+.avatar-4 { background-color: var(--bs-danger-bg-subtle); color: var(--bs-danger-text-emphasis); }
+
+.nav-avatar {
+  background-color: rgba(255, 255, 255, 0.16);
+  color: #fff;
+}
+
+.meta-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.65rem;
+  border: 1px solid var(--app-line);
+  border-radius: 999px;
+  background-color: #fff;
+  font-size: 0.8rem;
+}
+
+.empty-state {
+  padding: 3.5rem 1.5rem;
+  border: 2px dashed #d3dce8;
+  border-radius: var(--bs-border-radius-lg);
+  background-color: #fff;
+  color: var(--bs-secondary-color);
+  text-align: center;
+}
+
+/* --- sign in ----------------------------------------------------------------------------- */
+.login-wrap {
+  max-width: 26rem;
+  margin: 2.5rem auto 3rem;
+}
+
+.login-card {
+  box-shadow: var(--app-shadow);
+}
+
+/* --- patients and chart ------------------------------------------------------------------ */
+@media (min-width: 992px) {
+  .sticky-panel {
+    position: sticky;
+    top: 1rem;
+  }
+}
+
+.patient-option {
+  color: var(--bs-body-color);
+  cursor: pointer;
+}
+
+.patient-option:has(input:checked) {
+  background-color: #eef4ff;
+  box-shadow: inset 3px 0 0 var(--bs-primary);
+}
+
+.patient-option:has(input:focus-visible) {
+  outline: 2px solid var(--bs-primary);
+  outline-offset: -2px;
+}
+
+.engine-option {
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-start;
+  height: 100%;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid var(--bs-border-color);
+  border-radius: var(--bs-border-radius-lg);
+  background-color: #fff;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.engine-option:hover {
+  border-color: #9ec5fe;
+}
+
+.engine-option:has(input:checked) {
+  border-color: var(--bs-primary);
+  background-color: #f5f9ff;
+  box-shadow: 0 0 0 3px rgba(var(--bs-primary-rgb), 0.15);
+}
+
+.engine-option .form-check-input {
+  flex-shrink: 0;
+  margin-top: 0.2rem;
+}
+
+/* --- review ------------------------------------------------------------------------------ */
+.review-card .nav-link {
+  color: var(--bs-secondary-color);
+}
+
+.review-card .nav-link.active {
+  color: var(--bs-body-color);
+  font-weight: 600;
+}
+
+.review-card .tab-content {
+  min-height: 14rem;
+}
+
+.review-audio {
+  min-width: 14rem;
+  height: 2.25rem;
+}
+
+.review-actions {
+  z-index: 1010;
+  box-shadow: var(--app-shadow);
+}
+
+@media (min-width: 768px) {
+  .review-actions {
+    position: sticky;
+    bottom: 1rem;
+  }
+}
+
+.review-when {
+  max-width: 24rem;
+}
+
+.turn-role {
+  min-width: 5.5rem;
+}
+
+.turn-bubble {
+  max-width: 52rem;
+  padding: 0.45rem 0.8rem;
+  border-radius: 0.25rem 0.85rem 0.85rem 0.85rem;
+  background-color: #f1f5f9;
+}
+
+.turn-bubble.clinician {
+  background-color: var(--bs-primary-bg-subtle);
+}
+
+.turn-bubble.patient {
+  background-color: var(--bs-success-bg-subtle);
+}
+
+#resource-list .list-group-item:has(input:checked) {
+  box-shadow: inset 3px 0 0 var(--bs-primary);
+}
+
+.json-view {
+  max-height: 60vh;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.compare-transcript {
+  max-height: 22rem;
+  overflow: auto;
+}
+
+.note-sentence.active {
+  background-color: var(--bs-warning-bg-subtle);
+}
+
+/* --- done -------------------------------------------------------------------------------- */
+.done-card {
+  max-width: 40rem;
+}
+
+.done-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 50%;
+  background-color: var(--bs-success-bg-subtle);
+  color: var(--bs-success);
+}
+
+.done-icon .icon {
+  width: 1.5rem;
+  height: 1.5rem;
+}

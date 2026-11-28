@@ -1,0 +1,156 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">
+  <title>Voice-to-FHIR on AWS: architecture overview</title>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#545B64"/>
+    </marker>
+    <marker id="arrow-muted" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#8D99A8"/>
+    </marker>
+    <filter id="shadow" x="-5%" y="-5%" width="110%" height="120%">
+      <feDropShadow dx="0" dy="3" stdDeviation="5" flood-color="#0F1B2D" flood-opacity="0.10"/>
+    </filter>
+  </defs>
+
+  <rect width="1920" height="1080" fill="#FFFFFF"/>
+
+  <!-- Title -->
+  <text x="60" y="78" font-size="44" font-weight="700" fill="#16191F">Voice-to-FHIR on AWS</text>
+  <text x="60" y="120" font-size="24" fill="#545B64">Consultation audio → AI-drafted FHIR → clinician-approved record in AWS HealthLake</text>
+  <rect x="1606" y="52" width="254" height="44" rx="22" fill="#FFF4E0" stroke="#E07B00" stroke-width="1.5"/>
+  <text x="1733" y="81" font-size="20" font-weight="700" fill="#A35400" text-anchor="middle">Synthetic data only</text>
+
+  <!-- ============ Top row ============ -->
+  <!-- 1. Clinician -->
+  <g filter="url(#shadow)">
+    <rect x="60" y="190" width="240" height="280" rx="16" fill="#FFFFFF" stroke="#D5DBDB"/>
+    <path d="M60,206 a16,16 0 0 1 16,-16 h208 a16,16 0 0 1 16,16 v40 h-240 z" fill="#232F3E"/>
+  </g>
+  <text x="180" y="227" font-size="22" font-weight="700" fill="#FFFFFF" text-anchor="middle">Clinician</text>
+  <text x="84" y="288" font-size="20" font-weight="700" fill="#16191F">Web browser</text>
+  <text font-size="18" fill="#545B64"><tspan x="84" y="324">Sign in</tspan><tspan x="84" y="352">Choose a patient</tspan><tspan x="84" y="380">Pick or upload a</tspan><tspan x="84" y="408">synthetic recording</tspan></text>
+
+  <!-- 2. Secure web app & API -->
+  <g filter="url(#shadow)">
+    <rect x="370" y="190" width="330" height="280" rx="16" fill="#FFFFFF" stroke="#D5DBDB"/>
+    <path d="M370,206 a16,16 0 0 1 16,-16 h298 a16,16 0 0 1 16,16 v40 h-330 z" fill="#7B3FE4"/>
+  </g>
+  <text x="535" y="227" font-size="22" font-weight="700" fill="#FFFFFF" text-anchor="middle">Secure web app &amp; API</text>
+  <text x="394" y="286" font-size="19" font-weight="700" fill="#16191F">Amazon CloudFront + S3</text>
+  <text x="394" y="311" font-size="17" fill="#545B64">hosts the web app</text>
+  <text x="394" y="350" font-size="19" font-weight="700" fill="#16191F">Amazon Cognito</text>
+  <text x="394" y="375" font-size="17" fill="#545B64">clinician sign-in</text>
+  <text x="394" y="414" font-size="19" font-weight="700" fill="#16191F">Amazon API Gateway</text>
+  <text x="394" y="439" font-size="17" fill="#545B64">+ AWS Lambda · token-protected API</text>
+
+  <!-- 3. Audio intake -->
+  <g filter="url(#shadow)">
+    <rect x="770" y="190" width="260" height="280" rx="16" fill="#FFFFFF" stroke="#D5DBDB"/>
+    <path d="M770,206 a16,16 0 0 1 16,-16 h228 a16,16 0 0 1 16,16 v40 h-260 z" fill="#5E8E0F"/>
+  </g>
+  <text x="900" y="227" font-size="22" font-weight="700" fill="#FFFFFF" text-anchor="middle">Audio intake</text>
+  <text x="794" y="288" font-size="20" font-weight="700" fill="#16191F">Amazon S3</text>
+  <text font-size="18" fill="#545B64"><tspan x="794" y="322">Consultation audio</tspan><tspan x="794" y="350">lands in a private</tspan><tspan x="794" y="378">bucket</tspan></text>
+  <text x="794" y="422" font-size="18" font-weight="700" fill="#16191F">S3 event → AWS Lambda</text>
+  <text x="794" y="448" font-size="17" fill="#545B64">starts the pipeline</text>
+
+  <!-- 4. Speech to text -->
+  <g filter="url(#shadow)">
+    <rect x="1100" y="190" width="360" height="280" rx="16" fill="#FFFFFF" stroke="#D5DBDB"/>
+    <path d="M1100,206 a16,16 0 0 1 16,-16 h328 a16,16 0 0 1 16,16 v40 h-360 z" fill="#01806B"/>
+  </g>
+  <text x="1280" y="227" font-size="22" font-weight="700" fill="#FFFFFF" text-anchor="middle">Speech to text</text>
+  <rect x="1122" y="264" width="316" height="82" rx="10" fill="#E6F4F1" stroke="#B5DDD4"/>
+  <text x="1140" y="297" font-size="19" font-weight="700" fill="#16191F">Amazon Transcribe Medical</text>
+  <text x="1140" y="324" font-size="17" fill="#545B64">medical transcript, speaker labels</text>
+  <text x="1280" y="368" font-size="16" font-weight="700" fill="#01806B" text-anchor="middle">and / or</text>
+  <rect x="1122" y="380" width="316" height="72" rx="10" fill="#E6F4F1" stroke="#B5DDD4"/>
+  <text x="1140" y="410" font-size="19" font-weight="700" fill="#16191F">AWS HealthScribe</text>
+  <text x="1140" y="436" font-size="17" fill="#545B64">speaker roles · sections · clinical note</text>
+
+  <!-- 5. Clinical NLP -->
+  <g filter="url(#shadow)">
+    <rect x="1530" y="190" width="330" height="280" rx="16" fill="#FFFFFF" stroke="#D5DBDB"/>
+    <path d="M1530,206 a16,16 0 0 1 16,-16 h298 a16,16 0 0 1 16,16 v40 h-330 z" fill="#01806B"/>
+  </g>
+  <text x="1695" y="227" font-size="22" font-weight="700" fill="#FFFFFF" text-anchor="middle">Clinical NLP</text>
+  <text x="1554" y="288" font-size="19" font-weight="700" fill="#16191F">Amazon Comprehend Medical</text>
+  <text font-size="18" fill="#545B64"><tspan x="1554" y="326">• Conditions → ICD-10-CM</tspan><tspan x="1554" y="360">• Medications → RxNorm</tspan><tspan x="1554" y="394">• Negation &amp; family history</tspan><tspan x="1572" y="419">excluded</tspan><tspan x="1554" y="451">• Low confidence flagged</tspan></text>
+
+  <!-- ============ Bottom row ============ -->
+  <!-- 6. Draft FHIR -->
+  <g filter="url(#shadow)">
+    <rect x="1340" y="610" width="520" height="250" rx="16" fill="#FFFFFF" stroke="#D5DBDB"/>
+    <path d="M1340,626 a16,16 0 0 1 16,-16 h488 a16,16 0 0 1 16,16 v40 h-520 z" fill="#C45F00"/>
+  </g>
+  <text x="1600" y="647" font-size="22" font-weight="700" fill="#FFFFFF" text-anchor="middle">Draft FHIR R4 resources</text>
+  <text x="1364" y="708" font-size="19" font-weight="700" fill="#16191F">Condition · MedicationStatement</text>
+  <text font-size="18" fill="#545B64"><tspan x="1364" y="744">DocumentReference: transcript and AI note</tspan><tspan x="1364" y="776">AI-labelled, with confidence scores</tspan><tspan x="1364" y="808">Draft in Amazon S3 · status in Amazon DynamoDB</tspan></text>
+
+  <!-- 7. Clinician review (the gate) -->
+  <g filter="url(#shadow)">
+    <rect x="680" y="610" width="560" height="250" rx="16" fill="#FFFFFF" stroke="#E07B00" stroke-width="3"/>
+    <path d="M681.5,626 a14.5,14.5 0 0 1 14.5,-14.5 h529 a14.5,14.5 0 0 1 14.5,14.5 v40 h-558 z" fill="#232F3E"/>
+  </g>
+  <text x="960" y="647" font-size="22" font-weight="700" fill="#FFFFFF" text-anchor="middle">Clinician review · human in the loop</text>
+  <text font-size="18" fill="#545B64"><tspan x="704" y="708">Listen, read the transcript and the AI note with evidence</tspan><tspan x="704" y="740">Edit, add or untick resources</tspan><tspan x="704" y="772">Approve (feedback optional) or reject (feedback required)</tspan></text>
+  <rect x="704" y="792" width="512" height="44" rx="10" fill="#FFF4E0"/>
+  <text x="960" y="821" font-size="19" font-weight="700" fill="#A35400" text-anchor="middle">Nothing reaches HealthLake before approval</text>
+
+  <!-- 8. AWS HealthLake -->
+  <g filter="url(#shadow)">
+    <rect x="60" y="610" width="520" height="250" rx="16" fill="#FFFFFF" stroke="#D5DBDB"/>
+    <path d="M60,626 a16,16 0 0 1 16,-16 h488 a16,16 0 0 1 16,16 v40 h-520 z" fill="#1B6E53"/>
+  </g>
+  <text x="320" y="647" font-size="22" font-weight="700" fill="#FFFFFF" text-anchor="middle">AWS HealthLake</text>
+  <text x="84" y="708" font-size="19" font-weight="700" fill="#16191F">FHIR R4 datastore</text>
+  <text font-size="18" fill="#545B64"><tspan x="84" y="744">Approved resources + Encounter</tspan><tspan x="84" y="776">Provenance: AI author, clinician verifier</tspan><tspan x="84" y="808">Read back in the patient chart</tspan></text>
+
+  <!-- ============ Arrows and step numbers ============ -->
+  <g stroke="#545B64" stroke-width="3" fill="none" marker-end="url(#arrow)">
+    <line x1="302" y1="330" x2="366" y2="330"/>
+    <line x1="702" y1="330" x2="766" y2="330"/>
+    <line x1="1032" y1="330" x2="1096" y2="330"/>
+    <line x1="1462" y1="330" x2="1526" y2="330"/>
+    <line x1="1695" y1="472" x2="1695" y2="606"/>
+    <line x1="1338" y1="735" x2="1244" y2="735"/>
+    <line x1="678" y1="735" x2="584" y2="735"/>
+  </g>
+  <!-- read path: HealthLake → clinician's patient chart -->
+  <line x1="180" y1="608" x2="180" y2="474" stroke="#8D99A8" stroke-width="2.5" stroke-dasharray="8 7" marker-end="url(#arrow-muted)"/>
+  <text x="196" y="546" font-size="16" fill="#6B7785">patient chart &amp;</text>
+  <text x="196" y="567" font-size="16" fill="#6B7785">FHIR viewer (read)</text>
+
+  <g font-size="17" font-weight="700" fill="#FFFFFF" text-anchor="middle">
+    <circle cx="335" cy="300" r="17" fill="#232F3E"/><text x="335" y="306">1</text>
+    <circle cx="735" cy="300" r="17" fill="#232F3E"/><text x="735" y="306">2</text>
+    <circle cx="1065" cy="300" r="17" fill="#232F3E"/><text x="1065" y="306">3</text>
+    <circle cx="1495" cy="300" r="17" fill="#232F3E"/><text x="1495" y="306">4</text>
+    <circle cx="1725" cy="540" r="17" fill="#232F3E"/><text x="1725" y="546">5</text>
+    <circle cx="1291" cy="705" r="17" fill="#232F3E"/><text x="1291" y="711">6</text>
+    <circle cx="631" cy="705" r="17" fill="#232F3E"/><text x="631" y="711">7</text>
+  </g>
+
+  <!-- ============ Step legend ============ -->
+  <line x1="60" y1="908" x2="1860" y2="908" stroke="#E3E6EA" stroke-width="2"/>
+  <g font-size="17" fill="#16191F">
+    <circle cx="74" cy="944" r="13" fill="#232F3E"/><text x="74" y="949" font-size="14" font-weight="700" fill="#FFFFFF" text-anchor="middle">1</text>
+    <text x="96" y="950">Sign in, pick patient and recording</text>
+    <circle cx="534" cy="944" r="13" fill="#232F3E"/><text x="534" y="949" font-size="14" font-weight="700" fill="#FFFFFF" text-anchor="middle">2</text>
+    <text x="556" y="950">Audio lands in S3; an event starts the pipeline</text>
+    <circle cx="994" cy="944" r="13" fill="#232F3E"/><text x="994" y="949" font-size="14" font-weight="700" fill="#FFFFFF" text-anchor="middle">3</text>
+    <text x="1016" y="950">Transcribe Medical / HealthScribe transcribe</text>
+    <circle cx="1454" cy="944" r="13" fill="#232F3E"/><text x="1454" y="949" font-size="14" font-weight="700" fill="#FFFFFF" text-anchor="middle">4</text>
+    <text x="1476" y="950">Comprehend Medical extracts and codes</text>
+    <circle cx="74" cy="986" r="13" fill="#232F3E"/><text x="74" y="991" font-size="14" font-weight="700" fill="#FFFFFF" text-anchor="middle">5</text>
+    <text x="96" y="992">Draft FHIR built; uncertain items flagged</text>
+    <circle cx="534" cy="986" r="13" fill="#232F3E"/><text x="534" y="991" font-size="14" font-weight="700" fill="#FFFFFF" text-anchor="middle">6</text>
+    <text x="556" y="992">Clinician edits, approves or rejects</text>
+    <circle cx="994" cy="986" r="13" fill="#232F3E"/><text x="994" y="991" font-size="14" font-weight="700" fill="#FFFFFF" text-anchor="middle">7</text>
+    <text x="1016" y="992">Approved resources + Provenance to HealthLake</text>
+  </g>
+
+  <!-- Footer -->
+  <text x="60" y="1050" font-size="15" fill="#8D99A8">Serverless · AWS CDK (Python) · Amazon S3 events, AWS Lambda, Amazon DynamoDB · least-privilege IAM · logs carry IDs only</text>
+  <text x="1860" y="1050" font-size="15" fill="#8D99A8" text-anchor="end">Independent proof of concept · not affiliated with AWS · not medical advice</text>
+</svg>
