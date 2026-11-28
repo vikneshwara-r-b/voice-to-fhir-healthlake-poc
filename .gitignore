@@ -221,3 +221,15 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# CDK
+cdk.out/
+cdk.context.json
+
+# Generated sample audio (scripts/generate_sample_audio.py)
+samples/audio/*.wav
+# Recordings converted for upload (see README "Uploading your own recording")
+samples/audio/*.m4a
+
+# Optional CDK Graph (aws-pdk) virtualenv for scripts/generate_architecture_diagram.py
+.venv-diagram/

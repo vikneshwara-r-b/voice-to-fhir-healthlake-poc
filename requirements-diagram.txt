@@ -1,0 +1,5 @@
+# Optional: only for scripts/generate_architecture_diagram.py. Keep it in its own virtualenv.
+# AWS PDK (which contains CDK Graph) is no longer supported by AWS; it is used here as a
+# documentation tool only and is never a dependency of the deployed app.
+-r requirements.txt
+aws-pdk==0.26.15
